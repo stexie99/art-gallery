@@ -1,31 +1,45 @@
-import logo from './logo.svg'
-import Gallery from './views/Gallery'
-import Button from './views/Button'
-import React, { useState, useEffect } from 'react'
+import './App.css';
+import { useSelector, useDispatch, connect } from 'react-redux'
+import { clearData, fetchData, incrementId, decrementId, inputId } from './features/dataSlice'
+import { useEffect } from 'react';
 
-function App() {
-  let [artId, setArtId] = useState(12720)
-  let [data, setData] = useState({})
+function App(props) {
+  const dispatch = useDispatch()
+  const data = useSelector((state) => state.data)
 
-  useEffect(() => {
-      document.title='Welcome to Artworld'
-      fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${artId}`)
-      .then(response => response.json())
-      .then(resData => setData(resData))
-  }, [artId])
-
-  const handleIterate = (e) => {
-      setArtId(artId + Number(e.target.value))
+  const renderImg = () => {
+    if(data.apiData) {
+      return <img style={{'width': '100vw'}} src={data.apiData.primaryImage} alt={data.apiData.title} />
+    } else {
+      return <p>image here</p>
+    }
   }
 
+  useEffect(() => {
+    dispatch(fetchData())
+  }, [props.objectId, dispatch])
+
+
   return (
-    <>
+    <div className="App">
       <div>
-        <Gallery objectImg={data.primaryImage} artist={data.artistDisplayName} title={data.title} />
-        <Button handleIterate = {handleIterate} />
+        <button onClick={() => dispatch(fetchData())}>Thunk!</button>
+        <button onClick={() => dispatch(clearData())}>Clear</button>
+        <button onClick={() => dispatch(incrementId())}>Next</button>
+        <button onClick={() => dispatch(decrementId())}>Back</button>
       </div>
-    </>
-  )
+      <input value={ data.objectId } onChange={(e) => {
+        dispatch(inputId(Number(e.target.value)))
+      }} />
+      <div>
+        {data.objectId}
+        {renderImg()}
+      </div>
+    </div>
+  );
 }
 
-export default App;
+
+const mapStateToProps = (state, ownProps) => ({ objectId: state.data.objectId })
+
+export default connect(mapStateToProps)(App);
